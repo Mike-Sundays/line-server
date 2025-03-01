@@ -8,5 +8,6 @@ module ActiveSupport
     parallelize(workers: :number_of_processors)
 
     # Add more helper methods to be used by all tests here...
+    ENV['FILE_PATH'] = './test/files/a.txt'
   end
 end
