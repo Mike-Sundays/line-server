@@ -24,7 +24,11 @@ Rails.application.configure do
   end
 
   # Change to :null_store to avoid any caching.
-  config.cache_store = :memory_store
+  config.cache_store = :redis_cache_store, {
+    url: 'redis://localhost:6379/0', # URL for the Redis server (localhost:6379 is the default)
+    namespace: 'line_server_cache',        # A namespace for your cache
+    expires_in: nil        # Set an expiration time for cached data
+  }
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
