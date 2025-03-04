@@ -1,10 +1,10 @@
 require_relative "../../lib/save_line_offset_to_redis"
 
-=begin
 ENV["FILE_PATH"] = "./large_file_100000_lines.txt"
-=end
 
+=begin
 ENV["FILE_PATH"] = "./test/files/4_lines_of_text.txt"
+=end
 
 unless Rails.env.test?
   file_path = ENV["FILE_PATH"]
@@ -13,16 +13,20 @@ unless Rails.env.test?
     redis_client = Rails.application.config.redis
 
 
+=begin
     cached_data = redis_client.exists?(file_path)
 
     if cached_data
       puts "File at #{file_path} already precomputed. Skipping computation."
       return
     end
+=end
+
+    redis_client.flushall
 
     start_time = Time.now
 
-    SaveLineOffsetToRedis.run(file_path: file_path, redis: redis_client)
+    SaveLineOffsetToRedis.run(file_path: file_path, redis: redis_client, batch_size: 10000)
 
     end_time = Time.now
 
