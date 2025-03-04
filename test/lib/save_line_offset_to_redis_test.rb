@@ -2,12 +2,12 @@ require 'test_helper'
 
 class SaveLineOffsetToRedisTest < ActiveSupport::TestCase
   def setup
-    @redis = Rails.application.config.redis
+    @redis = redis_connection
   end
 
   def test_calculates_line_offset_correctly
     file_path = "./test/files/4_lines_of_text.txt"
-    SaveLineOffsetToRedis.run(file_path: file_path, redis: @redis)
+    SaveLineOffsetToRedis.run(file_path: file_path)
 
     redis_offsets = @redis.hgetall(file_path)
 
@@ -24,11 +24,11 @@ class SaveLineOffsetToRedisTest < ActiveSupport::TestCase
 
   def test_error_for_non_existent_file
     file_path = "./test/files/invalid.txt"
-    assert_raises(RuntimeError) { SaveLineOffsetToRedis.run(file_path:file_path, redis: @redis) }
+    assert_raises(RuntimeError) { SaveLineOffsetToRedis.run(file_path:file_path) }
   end
 
   def test_error_for_no_path
     file_path = nil
-    assert_raises(ArgumentError) { SaveLineOffsetToRedis.run(file_path:file_path, redis: @redis) }
+    assert_raises(ArgumentError) { SaveLineOffsetToRedis.run(file_path:file_path) }
   end
 end

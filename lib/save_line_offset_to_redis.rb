@@ -1,5 +1,5 @@
 module SaveLineOffsetToRedis
-  def self.run(file_path:, redis:, batch_size: 10000)
+  def self.run(file_path:, batch_size: 10000)
     raise ArgumentError, "File path must be provided" if file_path.blank?
 
     offset_hash = {}
@@ -18,17 +18,17 @@ module SaveLineOffsetToRedis
           line_number += 1
 
           if (line_number % batch_size).zero?
-            redis.hmset(file_path, *offset_hash.flatten)
+            redis_connection.hmset(file_path, *offset_hash.flatten)
             # clearing up memory
             offset_hash.clear
           end
         end
 
         # saving last batch if there are some remaining values
-        redis.hmset(file_path, *offset_hash.flatten) unless offset_hash.empty?
+        redis_connection.hmset(file_path, *offset_hash.flatten) unless offset_hash.empty?
         offset_hash.clear
 
-        redis.set("last_line_number", line_number.to_s)
+        redis_connection.set("last_line_number", line_number.to_s)
       end
     rescue Errno::ENOENT
       raise "File not found: #{file_path}"

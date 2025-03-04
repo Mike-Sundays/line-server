@@ -1,5 +1,6 @@
 require "active_support/core_ext/integer/time"
 require 'redis'
+require 'connection_pool'
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -24,7 +25,9 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  config.redis = Redis.new
+  config.redis = ConnectionPool.new(size: 2, timeout: 5) do
+    Redis.new
+  end
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false

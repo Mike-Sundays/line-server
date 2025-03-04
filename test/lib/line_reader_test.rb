@@ -4,12 +4,11 @@ class LineReaderTest < ActiveSupport::TestCase
   def setup
     @file_path = "./test/files/4_lines_of_text.txt"
     @line_byte_positions = [0, 34, 69, 70]
-    @redis = Rails.application.config.redis
   end
 
   def test_read_lines_works
     result = LineReader.read_line(
-      file_path: @file_path, line_number: 1, redis: @redis
+      file_path: @file_path, line_number: 1,
     )
 
     assert result.success
@@ -18,7 +17,7 @@ class LineReaderTest < ActiveSupport::TestCase
 
   def test_read_lines_works_2
     result = LineReader.read_line(
-      file_path: @file_path, line_number: 2, redis: @redis
+      file_path: @file_path, line_number: 2,
     )
 
     assert result.success
@@ -27,7 +26,7 @@ class LineReaderTest < ActiveSupport::TestCase
 
   def test_read_lines_with_invalid_line_number_after_end_of_file
     result = LineReader.read_line(
-      file_path: @file_path, line_number: 5, redis: @redis
+      file_path: @file_path, line_number: 5,
     )
 
     assert !result.success
@@ -36,7 +35,7 @@ class LineReaderTest < ActiveSupport::TestCase
 
   def test_read_lines_with_invalid_line_number_negative
     result = LineReader.read_line(
-      file_path: @file_path, line_number: -1, redis: @redis
+      file_path: @file_path, line_number: -1,
     )
 
     assert !result.success
@@ -45,7 +44,7 @@ class LineReaderTest < ActiveSupport::TestCase
 
   def test_read_lines_with_file_not_found
     result = LineReader.read_line(
-      file_path: "blabla", line_number: 5, redis: @redis
+      file_path: "blabla", line_number: 5,
     )
 
     assert !result.success
@@ -54,7 +53,7 @@ class LineReaderTest < ActiveSupport::TestCase
 
   def test_read_lines_with_line_number_not_an_integer
     result = LineReader.read_line(
-      file_path: "blabla", line_number: "frgrs", redis: @redis
+      file_path: "blabla", line_number: "frgrs",
     )
 
     assert !result.success

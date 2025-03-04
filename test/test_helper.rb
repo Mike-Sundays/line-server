@@ -5,10 +5,9 @@ require "rails/test_help"
 
 # This runs before each test, clearing up the redis test container,
 # and then to populate redis as if the file had been read.
-redis = Rails.application.config.redis
-redis.flushall
 
-SaveLineOffsetToRedis.run(file_path: "./test/files/4_lines_of_text.txt", redis: redis)
+redis_connection.flushall
+SaveLineOffsetToRedis.run(file_path: "./test/files/4_lines_of_text.txt")
 
 module ActiveSupport
   class TestCase

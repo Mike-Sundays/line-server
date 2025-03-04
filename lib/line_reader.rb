@@ -1,7 +1,7 @@
 module LineReader
-  def self.read_line(file_path:, line_number:, redis:)
+  def self.read_line(file_path:, line_number:)
     validation_result = validate_arguments(
-      file_path: file_path, line_number: line_number, redis: redis
+      file_path: file_path, line_number: line_number
     )
 
     return validation_result unless validation_result.success
@@ -10,7 +10,6 @@ module LineReader
       line_value = get_line_value(
         line_number: line_number.to_i,
         file_path: file_path,
-        redis: redis
       )
 
       Result.new(
@@ -32,7 +31,7 @@ module LineReader
 
   private
 
-  def self.validate_arguments(file_path:, line_number:, redis:)
+  def self.validate_arguments(file_path:, line_number:)
     begin
       line_number = Integer(line_number)
     rescue ArgumentError
@@ -52,7 +51,7 @@ module LineReader
         error_message: "File not found at #{file_path}")
     end
 
-    last_line_number = redis.get("last_line_number").to_i
+    last_line_number = redis_connection.get("last_line_number").to_i
 
     if line_number >= last_line_number || line_number.negative?
       return Result.new(
@@ -68,20 +67,20 @@ module LineReader
     Result.new(success: true, data: nil, error_status: nil, error_message: nil)
   end
 
-  def self.get_line_value(line_number:, file_path:, redis:)
+  def self.get_line_value(line_number:, file_path:)
     # caching frequently accessed lines
     key = "#{file_path}:line:#{line_number}"
-    cached_line_value = redis.get(key)
+    cached_line_value = redis_connection.get(key)
 
     line_value = nil
-    byte_position = redis.hget(file_path, line_number).to_i
+    byte_position = redis_connection.hget(file_path, line_number).to_i
     File.open(file_path, "r") do |file|
       file.seek(byte_position, IO::SEEK_SET)
       line_value = file.readline.chomp
     end
 
     # caching line value for one hour to avoid several requests to redis for the same line
-    redis.set(key, line_value, ex: 3600) if cached_line_value.nil?
+    redis_connection.set(key, line_value, ex: 3600) if cached_line_value.nil?
 
     line_value
   end

@@ -1,10 +1,6 @@
 require "test_helper"
 
 class Api::LineControllerTest < ActionDispatch::IntegrationTest
-  def setup
-    @redis = Rails.application.config.redis
-  end
-
   test "should return correct line for a valid file" do
     ENV["FILE_PATH"] = "./test/files/4_lines_of_text.txt"
 
