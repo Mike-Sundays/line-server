@@ -1,17 +1,16 @@
 module LineReader
-
-  def self.read_line(file_path:, line_byte_position:, line_number:)
+  def self.read_line(file_path:, line_number:, redis:)
     validation_result = validate_arguments(
-      file_path: file_path, line_byte_position: line_byte_position, line_number: line_number
+      file_path: file_path, line_number: line_number, redis: redis
     )
 
     return validation_result unless validation_result.success
 
     begin
       line_value = get_line_value(
-        line_byte_position: line_byte_position,
         line_number: line_number.to_i,
-        file_path: file_path
+        file_path: file_path,
+        redis: redis
       )
 
       Result.new(
@@ -33,7 +32,7 @@ module LineReader
 
   private
 
-  def self.validate_arguments(file_path:, line_byte_position:, line_number:)
+  def self.validate_arguments(file_path:, line_number:, redis:)
     begin
       line_number = Integer(line_number)
     rescue ArgumentError
@@ -53,14 +52,15 @@ module LineReader
         error_message: "File not found at #{file_path}")
     end
 
-    number_of_lines = line_byte_position.length
+    last_line_number = redis.get("last_line_number").to_i
 
-    if line_number >= number_of_lines || line_number.negative?
+    if line_number >= last_line_number || line_number.negative?
       return Result.new(
         success: false,
         data: nil,
         error_status: ErrorStatus::INVALID_LINE_NUMBER,
-        error_message: "The file has #{number_of_lines} lines - line at index #{line_number} does not exist"
+        error_message: "The file has #{last_line_number} lines - line at index #{line_number} " +
+                       "does not exist (index starts at 0, lasts index is #{line_number - 1})"
       )
     end
 
@@ -68,10 +68,11 @@ module LineReader
     Result.new(success: true, data: nil, error_status: nil, error_message: nil)
   end
 
-  def self.get_line_value(line_byte_position:, line_number:, file_path:)
+  def self.get_line_value(line_number:, file_path:, redis:)
     line_value = nil
+    byte_position = redis.hget(file_path, line_number).to_i
     File.open(file_path, "r") do |file|
-      file.seek(line_byte_position[line_number], IO::SEEK_SET)
+      file.seek(byte_position, IO::SEEK_SET)
       line_value = file.readline.chomp
     end
     line_value

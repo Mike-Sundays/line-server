@@ -1,11 +1,11 @@
 class Api::LineController < ApplicationController
   def show
-    line_byte_position = Rails.application.config.line_byte_position
-    line_number = params[:line_number]
     path = ENV["FILE_PATH"]
+    line_number = params[:line_number]
+    redis = Rails.application.config.redis
 
     result = LineReader.read_line(
-      file_path: path, line_number: line_number, line_byte_position: line_byte_position
+      file_path: path, line_number: line_number, redis: redis
     )
 
     if result.success

@@ -3,7 +3,12 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
-Rails.application.config.line_byte_position = LineOffsetCalculator.calculate("./test/files/4_lines_of_text.txt")
+# This runs before each test, clearing up the redis test container,
+# and then to populate redis as if the file had been read.
+redis = Rails.application.config.redis
+redis.flushall
+
+SaveLineOffsetToRedis.run(file_path: "./test/files/4_lines_of_text.txt", redis: redis)
 
 module ActiveSupport
   class TestCase
