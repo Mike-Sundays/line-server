@@ -69,12 +69,20 @@ module LineReader
   end
 
   def self.get_line_value(line_number:, file_path:, redis:)
+    # caching frequently accessed lines
+    key = "#{file_path}:line:#{line_number}"
+    cached_line_value = redis.get(key)
+
     line_value = nil
     byte_position = redis.hget(file_path, line_number).to_i
     File.open(file_path, "r") do |file|
       file.seek(byte_position, IO::SEEK_SET)
       line_value = file.readline.chomp
     end
+
+    # caching line value for one hour to avoid several requests to redis for the same line
+    redis.set(key, line_value, ex: 3600) if cached_line_value.nil?
+
     line_value
   end
 end
