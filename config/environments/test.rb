@@ -22,8 +22,8 @@ Rails.application.configure do
   config.consider_all_requests_local = true
 
 
-  config.redis = ConnectionPool.new(size: 1, timeout: 5) do
-    Redis.new(port: 6380)
+  config.redis = ConnectionPool.new(size: 1, timeout: 20) do
+    Redis.new(port: 6380, timeout: 5)
   end
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.

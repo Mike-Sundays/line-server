@@ -298,6 +298,7 @@ DEPENDENCIES
   brakeman
   debug
   kamal
+  parallel
   puma (>= 5.0)
   rails (~> 8.0.1)
   redis (>= 4.0.1)

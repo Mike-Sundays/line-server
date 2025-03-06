@@ -25,8 +25,8 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  config.redis = ConnectionPool.new(size: 2, timeout: 5) do
-    Redis.new
+  config.redis = ConnectionPool.new(size: 8, timeout: 20) do
+    Redis.new(port: 6379, timeout: 5)
   end
 
   # Don't care if the mailer can't send.

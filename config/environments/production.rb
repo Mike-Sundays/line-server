@@ -43,8 +43,8 @@ Rails.application.configure do
   # Replace the default in-process memory cache store with a durable alternative.
   # config.cache_store = :mem_cache_store
 
-  config.redis = ConnectionPool.new(size: 32, timeout: 5) do
-    Redis.new(port: 6381)
+  config.redis = ConnectionPool.new(size: 64, timeout: 20) do
+    Redis.new(port: 6381, timeout: 5)
   end
 
   # Replace the default in-process and non-durable queuing backend for Active Job.

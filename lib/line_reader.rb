@@ -51,7 +51,7 @@ module LineReader
         error_message: "File not found at #{file_path}")
     end
 
-    last_line_number = redis_connection.get("last_line_number").to_i
+    last_line_number = redis_connection.get("line_offsets:last_line_number").to_i
 
     if line_number >= last_line_number || line_number.negative?
       return Result.new(
@@ -69,11 +69,11 @@ module LineReader
 
   def self.get_line_value(line_number:, file_path:)
     # caching frequently accessed lines
-    key = "#{file_path}:line:#{line_number}"
+    key = "line_offsets:#{file_path}:line:#{line_number}"
     cached_line_value = redis_connection.get(key)
 
     line_value = nil
-    byte_position = redis_connection.hget(file_path, line_number).to_i
+    byte_position = redis_connection.hget("line_offsets:#{file_path}", line_number).to_i
     File.open(file_path, "r") do |file|
       file.seek(byte_position, IO::SEEK_SET)
       line_value = file.readline.chomp

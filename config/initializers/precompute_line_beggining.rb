@@ -1,8 +1,6 @@
 require_relative "../../lib/save_line_offset_to_redis"
 
-=begin
-ENV["FILE_PATH"] = "./large_file_10000000_lines.txt"
-=end
+ENV["FILE_PATH"] = "./benchmarking/large_file_100000_lines.txt"
 
 =begin
 ENV["FILE_PATH"] = "./test/files/4_lines_of_text.txt"
@@ -14,29 +12,33 @@ unless Rails.env.test?
   if file_path && File.exist?(file_path)
     redis_client = redis_connection
 
-
-    cached_data = redis_client.exists?(file_path)
+=begin
+    cached_data = redis_client.exists?("line_offsets:#{file_path}")
+=end
+=begin
 
     if cached_data
       puts "File at #{file_path} already precomputed. Skipping computation."
       return
     end
+=end
 
-    start_time = Time.now
+    redis_client.flushall
+    batch_size = 10_000
+    num_processes = 4
 
-    SaveLineOffsetToRedis.run(file_path: file_path, batch_size: 10000)
-
-    end_time = Time.now
-
-    time_taken = end_time - start_time
-
-    # Gather file metadata.
-    file_size = File.size(file_path)
-    human_readable_file_size = ActiveSupport::NumberHelper.number_to_human_size(file_size)
+    time = Benchmark.realtime do
+      SaveLineOffsetToRedis.run(
+        file_path: file_path,
+        batch_size: batch_size,
+        num_processes: num_processes
+      )
+    end
+    human_readable_file_size = ActiveSupport::NumberHelper.number_to_human_size(File.size(file_path))
 
 
     # Log the operation details.
-    puts "File at #{file_path} precomputed in #{time_taken} seconds. File size: #{human_readable_file_size}."
+    puts "File at #{file_path} precomputed in #{time.round(6)} seconds with #{num_processes} processes. File size: #{human_readable_file_size}."
   end
 
 end
