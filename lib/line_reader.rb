@@ -1,4 +1,6 @@
 module LineReader
+  OFFSET_CACHE = LruRedux::Cache.new(10_000)
+
   def self.read_line(file_path:, line_number:)
     validation_result = validate_arguments(
       file_path: file_path, line_number: line_number
@@ -68,19 +70,19 @@ module LineReader
   end
 
   def self.get_line_value(line_number:, file_path:)
-    # caching frequently accessed lines
-    key = "line_offsets:#{file_path}:line:#{line_number}"
-    cached_line_value = redis_connection.get(key)
+    # Define cache key for line value, using the file and line number
+    cache_key = "line_values:#{file_path}:line:#{line_number}"
 
-    line_value = nil
-    byte_position = redis_connection.hget("line_offsets:#{file_path}", line_number).to_i
-    File.open(file_path, "r") do |file|
-      file.seek(byte_position, IO::SEEK_SET)
-      line_value = file.readline.chomp
+    # Check for cached line value first
+    line_value = OFFSET_CACHE.getset(cache_key) do
+      byte_position = redis_connection.hget("line_offsets:#{file_path}", line_number).to_i
+      raise "Line not found" if byte_position.nil?
+
+      File.open(file_path, "r") do |file|
+        file.seek(byte_position, IO::SEEK_SET)
+        file.readline.chomp
+      end
     end
-
-    # caching line value for one hour to avoid several requests to redis for the same line
-    redis_connection.set(key, line_value, ex: 3600) if cached_line_value.nil?
 
     line_value
   end
