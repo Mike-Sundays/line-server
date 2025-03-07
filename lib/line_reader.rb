@@ -1,5 +1,6 @@
 module LineReader
-  OFFSET_CACHE = LruRedux::Cache.new(10_000)
+  CACHE_ENABLED = true
+  OFFSET_CACHE = LruRedux::Cache.new(50_000)
 
   def self.read_line(file_path:, line_number:)
     validation_result = validate_arguments(
@@ -70,20 +71,29 @@ module LineReader
   end
 
   def self.get_line_value(line_number:, file_path:)
-    # Define cache key for line value, using the file and line number
     cache_key = "line_values:#{file_path}:line:#{line_number}"
 
-    # Check for cached line value first
-    line_value = OFFSET_CACHE.getset(cache_key) do
-      byte_position = redis_connection.hget("line_offsets:#{file_path}", line_number).to_i
-      raise "Line not found" if byte_position.nil?
-
-      File.open(file_path, "r") do |file|
-        file.seek(byte_position, IO::SEEK_SET)
-        file.readline.chomp
+    if CACHE_ENABLED
+      # Use cache when enabled
+      OFFSET_CACHE.getset(cache_key) do
+        fetch_line_from_file(line_number, file_path)
       end
+    else
+      # Skip cache when disabled and fetch directly
+      fetch_line_from_file(line_number, file_path)
     end
-
-    line_value
   end
+
+
+  def self.fetch_line_from_file(line_number, file_path)
+    byte_position = redis_connection.hget("line_offsets:#{file_path}", line_number).to_i
+    raise "Line not found" if byte_position.nil?
+
+    FILE_HANDLER_POOL.with do |file|
+      file.seek(byte_position, IO::SEEK_SET)
+      file.readline.chomp
+    end
+  end
+
 end
+

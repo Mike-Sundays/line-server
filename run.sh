@@ -9,4 +9,4 @@ export FILE_PATH=$1
 echo "File to be used: $FILE_PATH"
 
 echo "Starting server"
-rails server
+RAILS_ENV=production rails server
